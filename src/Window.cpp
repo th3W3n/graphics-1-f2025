@@ -9,6 +9,12 @@ struct App
     GLFWwindow *window = nullptr;
 } gApp;
 
+void KeyboardCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(gApp.window, GLFW_TRUE);
+}
+
 void InitWindow(int width, int height, const char *title)
 {
     /* Initialize the library */
@@ -28,6 +34,9 @@ void InitWindow(int width, int height, const char *title)
 
     //Load OpenGL extensions
     assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress));
+
+    //register the customized event when ESC is pressed the window will close
+    glfwSetKeyCallback(gApp.window, KeyboardCallback);
 }
 
 bool WindowShouldClose()
