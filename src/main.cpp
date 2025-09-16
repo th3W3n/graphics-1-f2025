@@ -7,6 +7,9 @@ int main(void)
 
     while (!WindowShouldClose())
     {
+        if (IsKeyPressed(KEY_ESCAPE))
+            SetWindowShouldClose(true);
+
         float r = 239.0f / 255.0f;
         float g = 136.0f / 255.0f;
         float b = 190.0f / 255.0f;
