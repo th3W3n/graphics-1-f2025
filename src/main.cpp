@@ -1,6 +1,6 @@
+#include "Shader.h"
 #include "Window.h"
 #include <cstddef>
-#include <glad/glad.h>
 
 struct vec2
 {
@@ -32,26 +32,6 @@ static const Vertex vertices_white[3] =
         {  {0.0f, 0.6f}, {1.0f, 1.0f, 1.0f}}
 };
 
-static const char *vertex_shader_text =
-    "#version 330\n"
-    "layout (location = 0) in vec2 vPos;\n"
-    "layout (location = 1) in vec3 vCol;\n"
-    "out vec3 color;\n"
-    "void main()\n"
-    "{\n"
-    "    gl_Position = vec4(vPos, 0.0, 1.0);\n"
-    "    color = vCol;\n"
-    "}\n";
-
-static const char *fragment_shader_text =
-    "#version 330\n"
-    "in vec3 color;\n"
-    "out vec4 fragment;\n"
-    "void main()\n"
-    "{\n"
-    "    fragment = vec4(color, 1.0);\n"
-    "}\n";
-
 int main(void)
 {
     InitWindow(800, 800, "Graphics Course");
@@ -61,18 +41,9 @@ int main(void)
     float b = 210.0f / 255.0f;
     float a = 1.0f;
 
-    const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
-
-    const GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
-
-    const GLuint program = glCreateProgram(); //shader program object
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
+    GLuint a1_tri_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/a1_triangle.vert");
+    GLuint a1_tri_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/a1_triangle.frag");
+    GLuint a1_tri_shader = CreateProgram(a1_tri_vert, a1_tri_frag);
 
     GLuint vertex_buffer_rainbow;
     glGenBuffers(1, &vertex_buffer_rainbow);
@@ -122,21 +93,21 @@ int main(void)
         switch (object_index)
         {
         case 0:
-            glUseProgram(program);
+            glUseProgram(a1_tri_shader);
             glBindVertexArray(vertex_array_rainbow);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
         case 1:
             break;
         case 2:
-            glUseProgram(program);
+            glUseProgram(a1_tri_shader);
             glBindVertexArray(vertex_array_white);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
         case 3:
             break;
         case 4:
-            glUseProgram(program);
+            glUseProgram(a1_tri_shader);
             glBindVertexArray(vertex_array_rainbow);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
