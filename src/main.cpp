@@ -4,21 +4,19 @@
 
 struct vec2
 {
-    float x;
-    float y;
+    float x; //4 bytes
+    float y; //4 bytes
 };
-
 struct vec3
 {
     float x;
     float y;
     float z;
 };
-
 struct Vertex
 {
-    vec2 pos;
-    vec3 col;
+    vec2 pos; //offset of 0
+    vec3 col; //offset of 8 (4 bytes for x and 4 for y) //rgb colors
 };
 
 static const Vertex vertices[3] =
@@ -29,8 +27,8 @@ static const Vertex vertices[3] =
 
 static const char *vertex_shader_text =
     "#version 330\n"
-    "in vec3 vCol;\n"
-    "in vec2 vPos;\n"
+    "layout (location = 0) in vec2 vPos;\n"
+    "layout (location = 1) in vec3 vCol;\n"
     "out vec3 color;\n"
     "void main()\n"
     "{\n"
@@ -51,10 +49,10 @@ int main(void)
 {
     InitWindow(800, 800, "Graphics Course");
 
-    GLuint vertex_buffer;
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    float r = 239.0f / 255.0f;
+    float g = 136.0f / 255.0f;
+    float b = 190.0f / 255.0f;
+    float a = 1.0f;
 
     const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
@@ -64,41 +62,61 @@ int main(void)
     glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
     glCompileShader(fragment_shader);
 
-    const GLuint program = glCreateProgram();
+    const GLuint program = glCreateProgram(); //shader program object
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
 
-    //const GLint mvp_location = glGetUniformLocation(program, "MVP");
-    const GLint vpos_location = glGetAttribLocation(program, "vPos");
-    const GLint vcol_location = glGetAttribLocation(program, "vCol");
+    GLuint vertex_buffer;
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     GLuint vertex_array;
     glGenVertexArrays(1, &vertex_array);
     glBindVertexArray(vertex_array);
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(Vertex), (void *)offsetof(Vertex, pos));
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(Vertex), (void *)offsetof(Vertex, col));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, pos));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, col));
+
+    int object_index = 0;
 
     while (!WindowShouldClose())
     {
         if (IsKeyPressed(KEY_ESCAPE))
             SetWindowShouldClose(true);
 
-        float r = 239.0f / 255.0f;
-        float g = 136.0f / 255.0f;
-        float b = 190.0f / 255.0f;
-        float a = 1.0f;
-
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(program);
-        glBindVertexArray(vertex_array);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            ++object_index %= 5;
+        }
+        switch (object_index)
+        {
+        case 0:
+            glUseProgram(program);
+            glBindVertexArray(vertex_array);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+            break;
+        case 1:
+            break;
+        case 2:
+            glUseProgram(program);
+            glBindVertexArray(vertex_array);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+            break;
+        case 3:
+            break;
+        case 4:
+            glUseProgram(program);
+            glBindVertexArray(vertex_array);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+            break;
+        }
 
         UpdateWindow();
     }
