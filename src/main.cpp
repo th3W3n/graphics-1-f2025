@@ -1,5 +1,7 @@
 #include "Shader.h"
 #include "Window.h"
+#include <GLFW/glfw3.h>
+#include <cmath>
 #include <cstddef>
 
 struct vec2
@@ -94,15 +96,15 @@ int main(void)
         {
         case 0:
             glUseProgram(a1_tri_shader);
-            glBindVertexArray(vertex_array_rainbow);
+            glBindVertexArray(vertex_array_white);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
         case 1:
+            glUseProgram(a1_tri_shader);
+            glBindVertexArray(vertex_array_rainbow);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
         case 2:
-            glUseProgram(a1_tri_shader);
-            glBindVertexArray(vertex_array_white);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
         case 3:
             break;
