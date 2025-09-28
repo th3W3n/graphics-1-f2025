@@ -1,8 +1,11 @@
 #version 460 core
 
 in vec3 color;
-out vec4 fragment;
+out vec4 fragColor;
+
+uniform vec3 u_color;
+
 void main()
 {
-    fragment = vec4(color, 1.0);
+    fragColor = vec4(color * u_color, 1.0);
 }

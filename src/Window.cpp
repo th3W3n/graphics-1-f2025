@@ -152,6 +152,10 @@ bool WindowShouldClose()
     return glfwWindowShouldClose(gApp.window);
 }
 
+float Time()
+{
+    return glfwGetTime();
+}
 void UpdateWindow()
 {
     memcpy(gApp.keysPrevAction, gApp.keysCurrAction, sizeof(int) * KEY_COUNT);

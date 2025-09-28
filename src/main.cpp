@@ -1,58 +1,72 @@
 #include "Shader.h"
 #include "Window.h"
-#include <GLFW/glfw3.h>
-#include <cmath>
+#include "raymath.h"
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
-struct vec2
-{
-    float x; //4 bytes
-    float y; //4 bytes
-};
-struct vec3
-{
-    float x;
-    float y;
-    float z;
-};
 struct Vertex
 {
-    vec2 pos; //offset of 0
-    vec3 col; //offset of 8 (4 bytes for x and 4 for y) //rgb colors
+    Vector2 pos; // offset of 0
+    Vector3 col; // offset of 8 (4 bytes for pos.x + 4 bytes for pos.y = 8)
 };
 
-static const Vertex vertices_rainbow[3] =
-    {
-        {{-0.6f, -0.4f}, {1.0f, 0.0f, 0.0f}},
-        { {0.6f, -0.4f}, {0.0f, 1.0f, 0.0f}},
-        {  {0.0f, 0.6f}, {0.0f, 0.0f, 1.0f}}
-};
+// Assignment 1 object 1 -- white triangle (change these vertex colours from red to white)!!!
 static const Vertex vertices_white[3] =
     {
         {{-0.6f, -0.4f}, {1.0f, 1.0f, 1.0f}},
         { {0.6f, -0.4f}, {1.0f, 1.0f, 1.0f}},
-        {  {0.0f, 0.6f}, {1.0f, 1.0f, 1.0f}}
+        {   {0.f, 0.6f}, {1.0f, 1.0f, 1.0f}}
 };
 
-int main(void)
+// Assignment 1 object 2 -- rainbow triangle (done for you)
+//static const Vertex vertices_rainbow[3] =
+//{
+//    { { -0.6f, -0.4f }, { 1.0f, 0.0f, 0.0f } },
+//    { {  0.6f, -0.4f }, { 0.0f, 1.0f, 0.0f } },
+//    { {   0.f,  0.6f }, { 0.0f, 0.0f, 1.0f } }
+//};
+
+static const Vector2 vertex_positions[3] =
+    {
+        {-0.6f, -0.4f},
+        { 0.6f, -0.4f},
+        {  0.f,  0.6f}
+};
+
+static const Vector3 vertex_colors[3] =
+    {
+        {1.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f}
+};
+
+int main()
 {
     InitWindow(800, 800, "Graphics Course");
 
-    float r = 180.0f / 255.0f;
-    float g = 250.0f / 255.0f;
-    float b = 210.0f / 255.0f;
+    // Colors are represented as fractions between 0.0 and 1.0, so convert using a colour-picker tool accordingly!
+    float r = 239.0f / 255.0f;
+    float g = 136.0f / 255.0f;
+    float b = 190.0f / 255.0f;
     float a = 1.0f;
 
     GLuint a1_tri_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/a1_triangle.vert");
     GLuint a1_tri_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/a1_triangle.frag");
     GLuint a1_tri_shader = CreateProgram(a1_tri_vert, a1_tri_frag);
 
-    GLuint vertex_buffer_rainbow;
-    glGenBuffers(1, &vertex_buffer_rainbow);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_rainbow);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_rainbow), vertices_rainbow, GL_STATIC_DRAW);
+    GLuint vertex_buffer_rainbow_positions;
+    GLuint vertex_buffer_rainbow_colors;
+    glGenBuffers(1, &vertex_buffer_rainbow_positions);
+    glGenBuffers(1, &vertex_buffer_rainbow_colors);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_rainbow_positions);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), vertex_positions, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_rainbow_colors);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_colors), vertex_colors, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, GL_NONE); //unbind the buffer
-    //can only have 1 vertex buffer bound at a time, so must unbind to prevent overwriting it
+    // Can only have 1 vertex buffer bound at a time, so must unbind in order to prevent overwriting it
 
     GLuint vertex_buffer_white;
     glGenBuffers(1, &vertex_buffer_white);
@@ -63,60 +77,130 @@ int main(void)
     GLuint vertex_array_rainbow;
     glGenVertexArrays(1, &vertex_array_rainbow);
     glBindVertexArray(vertex_array_rainbow);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_rainbow);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, pos));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, col));
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_rainbow_positions);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_rainbow_colors);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), 0);
+
     glBindVertexArray(GL_NONE);
 
     GLuint vertex_array_white;
     glGenVertexArrays(1, &vertex_array_white);
     glBindVertexArray(vertex_array_white);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_white);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, pos));
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, col));
+
     glBindVertexArray(GL_NONE);
 
     int object_index = 0;
 
+    GLint u_color = glGetUniformLocation(a1_tri_shader, "u_color");
+    GLint u_world = glGetUniformLocation(a1_tri_shader, "u_world");
+
+    Matrix world = world = MatrixIdentity();
+
+    // Generally you want to Scale * Rotate * Translate (order matters)!!!
+    //world = MatrixRotateZ(30.0f * DEG2RAD) * MatrixTranslate(0.5f, 0.0f, 0.0f);
+
+    /* Loop until the user closes the window */
     while (!WindowShouldClose())
     {
         if (IsKeyPressed(KEY_ESCAPE))
             SetWindowShouldClose(true);
 
+        // Time in seconds since GLFW was initialized (use this with functions like sinf and cosf for repeating animations)
+        float tt = Time();
+
+        /* Render here */
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
 
         if (IsKeyPressed(KEY_SPACE))
+        {
             ++object_index %= 5;
+        }
+
         switch (object_index)
         {
         case 0:
+            //white triangle
             glUseProgram(a1_tri_shader);
+            glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+            glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
             glBindVertexArray(vertex_array_white);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
+
         case 1:
+            //rainbow triangle
             glUseProgram(a1_tri_shader);
+            glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+            glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
             glBindVertexArray(vertex_array_rainbow);
             glDrawArrays(GL_TRIANGLES, 0, 3);
             break;
+
         case 2:
+            //colour changes over time (using uniforms)
+            {
+                float r = (sinf(tt * 2.0f) + 1.0f) * 0.5f;
+                float g = (sinf(tt * 2.0f + 2.094f) + 1.0f) * 0.5f; // 2π/3 phase offset
+                float b = (sinf(tt * 2.0f + 4.188f) + 1.0f) * 0.5f; // 4π/3 phase offset
+                glUseProgram(a1_tri_shader);
+                glUniform3f(u_color, r, g, b);
+                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+                glBindVertexArray(vertex_array_white);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            }
             break;
+
         case 3:
+            //translates back and forth from x = 1 to x = -1
+            {
+                float translateX = sinf(tt);
+                world = MatrixTranslate(translateX, 0.0f, 0.0f);
+                glUseProgram(a1_tri_shader);
+                glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
+                glBindVertexArray(vertex_array_rainbow);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            }
             break;
+
         case 4:
-            glUseProgram(a1_tri_shader);
-            glBindVertexArray(vertex_array_rainbow);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            //rotates counter-clockwise about the z-axis
+            {
+                world = MatrixRotateZ(tt);
+                glUseProgram(a1_tri_shader);
+                glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
+                glBindVertexArray(vertex_array_rainbow);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            }
             break;
         }
 
+        // Called at end of the frame to swap buffers and update input
         UpdateWindow();
     }
+
+    glDeleteVertexArrays(1, &vertex_array_rainbow);
+    glDeleteVertexArrays(1, &vertex_array_white);
+    glDeleteBuffers(1, &vertex_buffer_rainbow_positions);
+    glDeleteBuffers(1, &vertex_buffer_rainbow_colors);
+    glDeleteBuffers(1, &vertex_buffer_white);
+    glDeleteProgram(a1_tri_shader);
+    glDeleteShader(a1_tri_frag);
+    glDeleteShader(a1_tri_vert);
 
     KillWindow();
     return 0;

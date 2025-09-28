@@ -6,6 +6,7 @@ void KillWindow();
 void SetWindowShouldClose(bool close);
 bool WindowShouldClose();
 
+float Time();
 void UpdateWindow();
 
 bool IsKeyDown(int key); //key held down
