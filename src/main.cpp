@@ -132,7 +132,10 @@ int main()
     //--------------------------------------------
 
     int object_index = 0;
-    bool is_cw = false;
+    int total_cases = 7;
+    glEnable(GL_CULL_FACE); //by default this is disabled
+    bool is_ccw = true; //opengl's default is also ccw
+    bool is_culling_back = true; //opengl's default is also culling the back face
 
     GLint u_color = glGetUniformLocation(a1_tri_shader, "u_color");
     GLint u_world = glGetUniformLocation(a1_tri_shader, "u_world");
@@ -141,9 +144,6 @@ int main()
 
     // Generally you want to Scale * Rotate * Translate (order matters)!!!
     //world = MatrixRotateZ(30.0f * DEG2RAD) * MatrixTranslate(0.5f, 0.0f, 0.0f);
-
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CCW);
 
     //--------------------------------------------
 
@@ -159,14 +159,25 @@ int main()
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        if (IsKeyPressed(KEY_SPACE))
+        if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_UP))
         {
-            ++object_index %= 7;
+            ++object_index %= total_cases;
+        }
+        if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_DOWN))
+        {
+            --object_index %= total_cases;
+            if (object_index < 0)
+                object_index += total_cases;
         }
         if (IsKeyPressed(KEY_Q))
         {
-            is_cw = !is_cw;
-            glFrontFace(is_cw ? GL_CW : GL_CCW);
+            is_ccw = !is_ccw;
+            glFrontFace(is_ccw ? GL_CCW : GL_CW);
+        }
+        if (IsKeyPressed(KEY_W))
+        {
+            is_culling_back = !is_culling_back;
+            glCullFace(is_culling_back ? GL_BACK : GL_FRONT);
         }
 
         switch (object_index)
