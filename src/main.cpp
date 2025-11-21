@@ -3,7 +3,7 @@
 #include "raymath.h"
 #include <cstddef>
 #include <cstdlib>
-// #include <cstdio>
+#include <vector>
 
 struct Vertex
 {
@@ -36,20 +36,31 @@ static const Vertex vertices_quad[] =
         {  {0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
         { {-0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}}
 };
-static int vertices_quad_indices[] =
+static const int vertices_quad_indices[] =
     {
         0, 1, 2,
         0, 2, 3};
-static int vertices_quad_indices2[] =
+static const int vertices_quad_indices2[] =
     {
         0, 1, 2,
         0, 3, 2};
+static const Vector3 new_vertices[] =
+    {
+        {-0.5f, -0.5f, 0.0f}, //bottom-left
+        { 0.5f, -0.5f, 0.0f}, //bottom-right
+        { 0.5f,  0.5f, 0.0f}, //top-right
+        {-0.5f,  0.5f, 0.0f}  //top-left
+};
+
 static Vector3 rgb_frequency = {0.0f, 0.0f, 0.0f};
 static Vector3 rgb_color = {0.0f, 0.0f, 0.0f};
 static bool isRandValChanged = false;
 
 int main()
 {
+    std::vector<GLuint> handles_buffers;
+    std::vector<GLuint> handles_vaos;
+
     InitWindow(800, 800, "Graphics Course");
 
     // Colors are represented as fractions between 0.0 and 1.0, so convert using a colour-picker tool accordingly!
@@ -58,14 +69,21 @@ int main()
     float b = 190.0f / 255.0f;
     float a = 1.0f;
 
-    GLuint a1_tri_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader1.vert");
-    GLuint a1_tri_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader1.frag");
-    GLuint a1_tri_shader = CreateProgram(a1_tri_vert, a1_tri_frag);
+    GLuint shader1_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader1.vert");
+    GLuint shader1_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader1.frag");
+    GLuint shader1 = CreateProgram(shader1_vert, shader1_frag);
+
+    GLuint shader2_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader2.vert");
+    GLuint shader2_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader2.frag");
+    GLuint shader2 = CreateProgram(shader2_vert, shader2_frag);
 
     GLuint vbos_rainbow[2];
     glGenBuffers(2, vbos_rainbow);
+    handles_buffers.push_back(vbos_rainbow[0]);
+    handles_buffers.push_back(vbos_rainbow[1]);
     GLuint vertex_array_rainbow;
     glGenVertexArrays(1, &vertex_array_rainbow);
+    handles_vaos.push_back(vertex_array_rainbow);
     glBindVertexArray(vertex_array_rainbow);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbos_rainbow[0]);
@@ -84,11 +102,13 @@ int main()
 
     GLuint vertex_buffer_white;
     glGenBuffers(1, &vertex_buffer_white);
+    handles_buffers.push_back(vertex_buffer_white);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_white);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_white), vertices_white, GL_STATIC_DRAW);
 
     GLuint vertex_array_white;
     glGenVertexArrays(1, &vertex_array_white);
+    handles_vaos.push_back(vertex_array_white);
     glBindVertexArray(vertex_array_white);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, pos));
@@ -103,16 +123,19 @@ int main()
 
     GLuint vbo_quad;
     glGenBuffers(1, &vbo_quad);
+    handles_buffers.push_back(vbo_quad);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_quad);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_quad), vertices_quad, GL_STATIC_DRAW);
 
     GLuint ebo_quad;
     glGenBuffers(1, &ebo_quad);
+    handles_buffers.push_back(ebo_quad);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertices_quad_indices), vertices_quad_indices, GL_STATIC_DRAW);
 
     GLuint vao_quad;
     glGenVertexArrays(1, &vao_quad);
+    handles_vaos.push_back(vao_quad);
     glBindVertexArray(vao_quad);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, pos));
@@ -128,20 +151,42 @@ int main()
 
     GLuint ebo_quad2;
     glGenBuffers(1, &ebo_quad2);
+    handles_buffers.push_back(ebo_quad2);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad2);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertices_quad_indices2), vertices_quad_indices2, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     //--------------------------------------------
 
+    GLuint vbo_new;
+    glGenBuffers(1, &vbo_new);
+    handles_buffers.push_back(vbo_new);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_new);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(new_vertices), new_vertices, GL_STATIC_DRAW);
+
+    GLuint vao_new;
+    glGenVertexArrays(1, &vao_new);
+    handles_vaos.push_back(vao_new);
+    glBindVertexArray(vao_new);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    //===============================================================================
+    //===============================================================================
+
     int object_index = 0;
-    int total_cases = 7;
+    int total_cases = 8;
     glEnable(GL_CULL_FACE); //by default this is disabled
     bool is_ccw = true; //opengl's default is also ccw
     bool is_culling_back = true; //opengl's default is also culling the back face
 
-    GLint u_color = glGetUniformLocation(a1_tri_shader, "u_color");
-    GLint u_world = glGetUniformLocation(a1_tri_shader, "u_world");
+    GLint u_color = glGetUniformLocation(shader1, "u_color");
+    GLint u_world = glGetUniformLocation(shader1, "u_world");
+    GLint u_mvp = glGetUniformLocation(shader2, "u_mvp");
 
     Matrix world = MatrixIdentity();
 
@@ -202,7 +247,7 @@ int main()
         {
         case 0:
             //white triangle
-            glUseProgram(a1_tri_shader);
+            glUseProgram(shader1);
             glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
             //must use MatrixToFloat to send mat4 since raylib matrix memory is in a different layout than glsl mat4
             glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
@@ -212,7 +257,7 @@ int main()
 
         case 1:
             //rainbow triangle
-            glUseProgram(a1_tri_shader);
+            glUseProgram(shader1);
             glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
             glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
             glBindVertexArray(vertex_array_rainbow);
@@ -225,7 +270,7 @@ int main()
                 rgb_color.x = (sinf(tt * rgb_frequency.x) + 1.0f) * 0.5f;
                 rgb_color.y = (sinf(tt * rgb_frequency.y) + 1.0f) * 0.5f;
                 rgb_color.z = (sinf(tt * rgb_frequency.z) + 1.0f) * 0.5f;
-                glUseProgram(a1_tri_shader);
+                glUseProgram(shader1);
                 glUniform3fv(u_color, 1, &rgb_color.x);
                 glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
                 glBindVertexArray(vertex_array_white);
@@ -238,7 +283,7 @@ int main()
             {
                 float translateX = sinf(tt);
                 world = MatrixTranslate(translateX, 0.0f, 0.0f);
-                glUseProgram(a1_tri_shader);
+                glUseProgram(shader1);
                 glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
                 glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
                 glBindVertexArray(vertex_array_rainbow);
@@ -250,7 +295,7 @@ int main()
             //rotates counter-clockwise about the z-axis
             {
                 world = MatrixRotateZ(tt);
-                glUseProgram(a1_tri_shader);
+                glUseProgram(shader1);
                 glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
                 glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
                 glBindVertexArray(vertex_array_rainbow);
@@ -258,7 +303,7 @@ int main()
             }
             break;
         case 5:
-            glUseProgram(a1_tri_shader);
+            glUseProgram(shader1);
             glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
             glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
             glBindVertexArray(vao_quad);
@@ -266,11 +311,18 @@ int main()
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             break;
         case 6:
-            glUseProgram(a1_tri_shader);
+            glUseProgram(shader1);
             glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
             glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
             glBindVertexArray(vao_quad);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad2);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            break;
+        case 7:
+            glUseProgram(shader2);
+            glUniformMatrix4fv(u_mvp, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+            glBindVertexArray(vao_new);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             break;
         }
@@ -279,17 +331,17 @@ int main()
         UpdateWindow();
     }
 
-    glDeleteVertexArrays(1, &vertex_array_rainbow);
-    glDeleteVertexArrays(1, &vertex_array_white);
-    glDeleteVertexArrays(1, &vao_quad);
-    glDeleteBuffers(2, vbos_rainbow);
-    glDeleteBuffers(1, &vertex_buffer_white);
-    glDeleteBuffers(1, &vbo_quad);
-    glDeleteBuffers(1, &ebo_quad);
-    glDeleteBuffers(1, &ebo_quad2);
-    glDeleteProgram(a1_tri_shader);
-    glDeleteShader(a1_tri_frag);
-    glDeleteShader(a1_tri_vert);
+    if (!handles_buffers.empty())
+        glDeleteBuffers(handles_buffers.size(), handles_buffers.data());
+    if (!handles_vaos.empty())
+        glDeleteVertexArrays(handles_vaos.size(), handles_vaos.data());
+
+    glDeleteProgram(shader1);
+    glDeleteProgram(shader2);
+    glDeleteShader(shader1_frag);
+    glDeleteShader(shader1_vert);
+    glDeleteShader(shader2_frag);
+    glDeleteShader(shader2_vert);
 
     KillWindow();
     return 0;
