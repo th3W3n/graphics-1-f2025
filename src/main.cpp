@@ -2,8 +2,8 @@
 #include "Window.h"
 #include "raymath.h"
 #include <cstddef>
+#include <cstdlib>
 // #include <cstdio>
-// #include <cstdlib>
 
 struct Vertex
 {
@@ -44,6 +44,9 @@ static int vertices_quad_indices2[] =
     {
         0, 1, 2,
         0, 3, 2};
+static Vector3 rgb_frequency = {0.0f, 0.0f, 0.0f};
+static Vector3 rgb_color = {0.0f, 0.0f, 0.0f};
+static bool isRandValChanged = false;
 
 int main()
 {
@@ -55,8 +58,8 @@ int main()
     float b = 190.0f / 255.0f;
     float a = 1.0f;
 
-    GLuint a1_tri_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/a1_triangle.vert");
-    GLuint a1_tri_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/a1_triangle.frag");
+    GLuint a1_tri_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader1.vert");
+    GLuint a1_tri_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader1.frag");
     GLuint a1_tri_shader = CreateProgram(a1_tri_vert, a1_tri_frag);
 
     GLuint vbos_rainbow[2];
@@ -180,6 +183,21 @@ int main()
             glCullFace(is_culling_back ? GL_BACK : GL_FRONT);
         }
 
+        if (object_index == 2)
+        {
+            if (!isRandValChanged)
+            {
+                float frequency = 3.0f;
+                rgb_frequency.x = (float)rand() / RAND_MAX * frequency; //0 ~ frequency
+                rgb_frequency.y = (float)rand() / RAND_MAX * frequency;
+                rgb_frequency.z = (float)rand() / RAND_MAX * frequency;
+                isRandValChanged = true;
+            }
+        }
+        else
+        {
+            isRandValChanged = false;
+        }
         switch (object_index)
         {
         case 0:
@@ -204,11 +222,11 @@ int main()
         case 2:
             //colour changes over time (using uniforms)
             {
-                float r = (sinf(tt * 2.0f) + 1.0f) * 0.5f;
-                float g = (sinf(tt * 2.0f + 2.094f) + 1.0f) * 0.5f; // 2π/3 phase offset
-                float b = (sinf(tt * 2.0f + 4.188f) + 1.0f) * 0.5f; // 4π/3 phase offset
+                rgb_color.x = (sinf(tt * rgb_frequency.x) + 1.0f) * 0.5f;
+                rgb_color.y = (sinf(tt * rgb_frequency.y) + 1.0f) * 0.5f;
+                rgb_color.z = (sinf(tt * rgb_frequency.z) + 1.0f) * 0.5f;
                 glUseProgram(a1_tri_shader);
-                glUniform3f(u_color, r, g, b);
+                glUniform3fv(u_color, 1, &rgb_color.x);
                 glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
                 glBindVertexArray(vertex_array_white);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
