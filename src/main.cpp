@@ -207,7 +207,8 @@ int main()
     //--------------------------------------------
 
     Mesh plane;
-    LoadMesh(&plane, 4, 6, new_positions, new_tcoords, new_normals, vertices_quad_indices);
+    CreateMesh(&plane, 4, 6, new_positions, new_tcoords, new_normals, vertices_quad_indices);
+    LoadMesh(&plane);
 
     //--------------------------------------------
 

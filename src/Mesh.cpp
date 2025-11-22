@@ -8,13 +8,13 @@
 #define FAST_OBJ_IMPLEMENTATION
 #include <fast_obj/fast_obj.h>
 
-void LoadMesh(Mesh *mesh,
-              int vertexCount,
-              int indexCount,
-              const Vector3 *positions,
-              const Vector2 *tcoords,
-              const Vector3 *normals,
-              const GLuint *indices)
+void CreateMesh(Mesh *mesh,
+                int vertexCount,
+                int indexCount,
+                const Vector3 *positions,
+                const Vector2 *tcoords,
+                const Vector3 *normals,
+                const GLuint *indices)
 {
     for (int i = 0; i < vertexCount; i++)
     {
@@ -26,32 +26,36 @@ void LoadMesh(Mesh *mesh,
     {
         mesh->indices.push_back(indices[i]);
     }
-
-    glGenBuffers(1, &mesh->vbo);
-    glGenBuffers(1, &mesh->tbo);
-    glGenBuffers(1, &mesh->nbo);
-    glGenBuffers(1, &mesh->ebo);
+}
+void LoadMesh(Mesh *mesh)
+{
     glGenVertexArrays(1, &mesh->vao);
-
     glBindVertexArray(mesh->vao);
 
+    glGenBuffers(1, &mesh->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glBufferData(GL_ARRAY_BUFFER, mesh->positions.size() * sizeof(Vector3), mesh->positions.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
     glEnableVertexAttribArray(0);
 
+    glGenBuffers(1, &mesh->tbo);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
     glBufferData(GL_ARRAY_BUFFER, mesh->tcoords.size() * sizeof(Vector2), mesh->tcoords.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), (GLvoid *)0);
     glEnableVertexAttribArray(1);
 
+    glGenBuffers(1, &mesh->nbo);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->nbo);
     glBufferData(GL_ARRAY_BUFFER, mesh->normals.size() * sizeof(Vector3), mesh->normals.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(GLuint), mesh->indices.data(), GL_STATIC_DRAW);
+    if (!mesh->indices.empty())
+    {
+        glGenBuffers(1, &mesh->ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(GLuint), mesh->indices.data(), GL_STATIC_DRAW);
+    }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
