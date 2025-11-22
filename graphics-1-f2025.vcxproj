@@ -83,6 +83,8 @@
     <ClCompile Include="src\Window.cpp" />
     <ClInclude Include="src\Shader.h" />
     <ClCompile Include="src\Shader.cpp" />
+    <ClInclude Include="src\Mesh.h" />
+    <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>

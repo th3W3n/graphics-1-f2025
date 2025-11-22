@@ -1,3 +1,4 @@
+#include "Mesh.h"
 #include "Shader.h"
 #include "Window.h"
 #include "raymath.h"
@@ -36,11 +37,11 @@ static const Vertex vertices_quad[] =
         {  {0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
         { {-0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}}
 };
-static const int vertices_quad_indices[] =
+static const GLuint vertices_quad_indices[] =
     {
         0, 1, 2,
         0, 2, 3};
-static const int vertices_quad_indices2[] =
+static const GLuint vertices_quad_indices2[] =
     {
         0, 1, 2,
         0, 3, 2};
@@ -77,9 +78,9 @@ int main()
     InitWindow(800, 800, "Graphics Course");
 
     // Colors are represented as fractions between 0.0 and 1.0, so convert using a colour-picker tool accordingly!
-    float r = 239.0f / 255.0f;
-    float g = 136.0f / 255.0f;
-    float b = 190.0f / 255.0f;
+    float r = 180.0f / 255.0f;
+    float g = 255.0f / 255.0f;
+    float b = 175.0f / 255.0f;
     float a = 1.0f;
 
     GLuint shader1_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader1.vert");
@@ -203,11 +204,21 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    //--------------------------------------------
+
+    Mesh plane;
+    LoadMesh(&plane, 4, 6, new_positions, new_tcoords, new_normals, vertices_quad_indices);
+
+    //--------------------------------------------
+
+    // Mesh head;
+    // LoadMesh(&head, "./assets/meshes/Monkey.obj");
+
     //===============================================================================
     //===============================================================================
 
     int object_index = 0;
-    int total_cases = 8;
+    int total_cases = 9;
     glEnable(GL_CULL_FACE); //by default this is disabled
     bool is_ccw = true; //opengl's default is also ccw
     bool is_culling_back = true; //opengl's default is also culling the back face
@@ -353,6 +364,9 @@ int main()
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             break;
+        case 8:
+            DrawMesh(plane, shader2, u_mvp);
+            break;
         }
 
         // Called at end of the frame to swap buffers and update input
@@ -370,6 +384,9 @@ int main()
     glDeleteShader(shader1_vert);
     glDeleteShader(shader2_frag);
     glDeleteShader(shader2_vert);
+
+    UnloadMesh(&plane);
+    // UnloadMesh(&head);
 
     KillWindow();
     return 0;
