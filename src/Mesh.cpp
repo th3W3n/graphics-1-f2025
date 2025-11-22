@@ -1,7 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS //to disable warnings from file_open() of fast_obj.h
 #include "Mesh.h"
+
+#define RAYMATH_IMPLEMENTATION
+#include "raymath.h"
+#define PAR_SHAPES_IMPLEMENTATION
+#include <par_shapes/par_shapes.h>
 #define FAST_OBJ_IMPLEMENTATION
-#include "fast_obj/fast_obj.h"
+#include <fast_obj/fast_obj.h>
 
 void LoadMesh(Mesh *mesh,
               int vertexCount,
