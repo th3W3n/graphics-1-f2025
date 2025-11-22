@@ -11,6 +11,6 @@ void main()
     vec4 pos = vec4(vPos, 1.0);
     gl_Position = u_mvp * pos;
     // color = vPos;
-    // color = vec3(vTcoord, 0.0);
-    color = vNorm;
+    color = vec3(vTcoord, 0.0);
+    // color = vNorm;
 }

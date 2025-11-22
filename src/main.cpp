@@ -76,12 +76,8 @@ int main()
     std::vector<GLuint> handles_vaos;
 
     InitWindow(800, 800, "Graphics Course");
-
-    // Colors are represented as fractions between 0.0 and 1.0, so convert using a colour-picker tool accordingly!
-    float r = 180.0f / 255.0f;
-    float g = 255.0f / 255.0f;
-    float b = 175.0f / 255.0f;
-    float a = 1.0f;
+    float r, g, b, a;
+    r = g = b = a = 0.0f;
 
     GLuint shader1_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader1.vert");
     GLuint shader1_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader1.frag");
@@ -395,6 +391,7 @@ int main()
     glDeleteShader(shader2_vert);
 
     UnloadMesh(&plane);
+    UnloadMesh(&par);
     // UnloadMesh(&head);
 
     KillWindow();

@@ -145,6 +145,13 @@ static void GenerateMeshDataParPlatonic(Mesh *mesh, ParShapesType type)
     Vector3 *par_normals = reinterpret_cast<Vector3 *>(par->normals);
     memcpy(mesh->normals.data(), par_normals, par->npoints * sizeof(Vector3));
 
+    if (par->tcoords != nullptr) //platonic par_shapes doesn't have tcoords
+    {
+        mesh->tcoords.resize(par->npoints);
+        Vector2 *par_tcoords = reinterpret_cast<Vector2 *>(par->tcoords);
+        memcpy(mesh->tcoords.data(), par_tcoords, par->npoints * sizeof(Vector2));
+    }
+
     mesh->indices.resize(3 * par->ntriangles);
     //cannot use memcpy here since par_shapes uses uint16_t, and I am using GLuint
     for (size_t i = 0; i < 3 * par->ntriangles; i++)
