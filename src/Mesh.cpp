@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS //to disable warnings from file_open() of fast_obj.h
 #include "Mesh.h"
+#include <cassert>
+#include <cstring>
 
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
@@ -7,6 +9,11 @@
 #include <par_shapes/par_shapes.h>
 #define FAST_OBJ_IMPLEMENTATION
 #include <fast_obj/fast_obj.h>
+
+//----------------------------------------------------------------------------------
+//helper functions not exposed in headers
+static void GenerateMeshDataParPlatonic(Mesh *mesh, ParShapesType type);
+//----------------------------------------------------------------------------------
 
 void CreateMesh(Mesh *mesh,
                 int vertexCount,
@@ -29,6 +36,8 @@ void CreateMesh(Mesh *mesh,
 }
 void LoadMesh(Mesh *mesh)
 {
+    assert(!mesh->positions.empty());
+
     glGenVertexArrays(1, &mesh->vao);
     glBindVertexArray(mesh->vao);
 
@@ -38,17 +47,23 @@ void LoadMesh(Mesh *mesh)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
     glEnableVertexAttribArray(0);
 
-    glGenBuffers(1, &mesh->tbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh->tcoords.size() * sizeof(Vector2), mesh->tcoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), (GLvoid *)0);
-    glEnableVertexAttribArray(1);
+    if (!mesh->tcoords.empty())
+    {
+        glGenBuffers(1, &mesh->tbo);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
+        glBufferData(GL_ARRAY_BUFFER, mesh->tcoords.size() * sizeof(Vector2), mesh->tcoords.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), (GLvoid *)0);
+        glEnableVertexAttribArray(1);
+    }
 
-    glGenBuffers(1, &mesh->nbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->nbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh->normals.size() * sizeof(Vector3), mesh->normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
-    glEnableVertexAttribArray(2);
+    if (!mesh->normals.empty())
+    {
+        glGenBuffers(1, &mesh->nbo);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->nbo);
+        glBufferData(GL_ARRAY_BUFFER, mesh->normals.size() * sizeof(Vector3), mesh->normals.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
+        glEnableVertexAttribArray(2);
+    }
 
     if (!mesh->indices.empty())
     {
@@ -60,6 +75,11 @@ void LoadMesh(Mesh *mesh)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+void LoadMesh(Mesh *mesh, ParShapesType type)
+{
+    GenerateMeshDataParPlatonic(mesh, type);
+    LoadMesh(mesh);
 }
 void LoadMesh(Mesh *mesh, const char *path)
 {
@@ -77,12 +97,58 @@ void UnloadMesh(Mesh *mesh)
     mesh->normals.resize(0);
     mesh->indices.resize(0);
 }
-void DrawMesh(const Mesh &mesh, GLuint shaderProgram, GLint u_mvp)
+void DrawMesh(const Mesh &mesh, GLuint shaderProgram, GLint u_mvp, Matrix mat)
 {
     glUseProgram(shaderProgram);
-    if (u_mvp != -1)
-        glUniformMatrix4fv(u_mvp, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+    if (u_mvp != -1) //if a uniform (of mat4) exists
+        glUniformMatrix4fv(u_mvp, 1, GL_FALSE, MatrixToFloat(mat));
     glBindVertexArray(mesh.vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
     glDrawElements(GL_TRIANGLES, GLsizei(mesh.indices.size()), GL_UNSIGNED_INT, 0);
+}
+
+//----------------------------------------------------------------------------------
+//helper functions implementation
+
+static void GenerateMeshDataParPlatonic(Mesh *mesh, ParShapesType type)
+{
+    par_shapes_mesh *par = nullptr;
+    switch (type)
+    {
+    case ParShapesType::MESH_TETRAHEDRON:
+        par = par_shapes_create_tetrahedron();
+        break;
+    case ParShapesType::MESH_CUBE:
+        par = par_shapes_create_cube();
+        break;
+    case ParShapesType::MESH_OCTAHEDRON:
+        par = par_shapes_create_octahedron();
+        break;
+    case ParShapesType::MESH_DODECAHEDRON:
+        par = par_shapes_create_dodecahedron();
+        break;
+    case ParShapesType::MESH_ICOSAHEDRON:
+        par = par_shapes_create_icosahedron();
+        break;
+    default:
+        return;
+    }
+
+    assert(par != nullptr);
+    par_shapes_compute_normals(par);
+
+    mesh->positions.resize(par->npoints);
+    Vector3 *par_positions = reinterpret_cast<Vector3 *>(par->points);
+    memcpy(mesh->positions.data(), par_positions, par->npoints * sizeof(Vector3));
+
+    mesh->normals.resize(par->npoints);
+    Vector3 *par_normals = reinterpret_cast<Vector3 *>(par->normals);
+    memcpy(mesh->normals.data(), par_normals, par->npoints * sizeof(Vector3));
+
+    mesh->indices.resize(3 * par->ntriangles);
+    //cannot use memcpy here since par_shapes uses uint16_t, and I am using GLuint
+    for (size_t i = 0; i < 3 * par->ntriangles; i++)
+        mesh->indices[i] = par->triangles[i];
+
+    par_shapes_free_mesh(par);
 }

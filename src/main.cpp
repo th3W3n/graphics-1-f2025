@@ -112,7 +112,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    //--------------------------------------------
+    //case 0--------------------------------------------
 
     GLuint vertex_buffer_white;
     glGenBuffers(1, &vertex_buffer_white);
@@ -133,7 +133,7 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    //--------------------------------------------
+    //case 5--------------------------------------------
 
     GLuint vbo_quad;
     glGenBuffers(1, &vbo_quad);
@@ -161,7 +161,7 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    //--------------------------------------------
+    //case 6--------------------------------------------
 
     GLuint ebo_quad2;
     glGenBuffers(1, &ebo_quad2);
@@ -170,7 +170,7 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertices_quad_indices2), vertices_quad_indices2, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    //--------------------------------------------
+    //case 7--------------------------------------------
 
     GLuint vbo_new_positions;
     GLuint vbo_new_tcoords;
@@ -204,22 +204,24 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    //--------------------------------------------
+    //case 8--------------------------------------------
 
     Mesh plane;
     CreateMesh(&plane, 4, 6, new_positions, new_tcoords, new_normals, vertices_quad_indices);
     LoadMesh(&plane);
 
-    //--------------------------------------------
+    //case 9--------------------------------------------
 
     // Mesh head;
     // LoadMesh(&head, "./assets/meshes/Monkey.obj");
+    Mesh par;
+    LoadMesh(&par, ParShapesType::MESH_OCTAHEDRON);
 
     //===============================================================================
     //===============================================================================
 
     int object_index = 0;
-    int total_cases = 9;
+    int total_cases = 10;
     glEnable(GL_CULL_FACE); //by default this is disabled
     bool is_ccw = true; //opengl's default is also ccw
     bool is_culling_back = true; //opengl's default is also culling the back face
@@ -366,7 +368,13 @@ int main()
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             break;
         case 8:
-            DrawMesh(plane, shader2, u_mvp);
+            world = MatrixRotateZ(tt);
+            DrawMesh(plane, shader2, u_mvp, world);
+            break;
+        case 9:
+            //translate some offset first, then start rotating
+            world = MatrixMultiply(MatrixTranslate(0.0f, -0.5f, 0.0f), MatrixRotateY(tt));
+            DrawMesh(par, shader2, u_mvp, world);
             break;
         }
 
