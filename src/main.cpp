@@ -44,17 +44,30 @@ static const int vertices_quad_indices2[] =
     {
         0, 1, 2,
         0, 3, 2};
-static const Vector3 new_vertices[] =
+static Vector3 rgb_frequency = {0.0f, 0.0f, 0.0f};
+static Vector3 rgb_color = {0.0f, 0.0f, 0.0f};
+static bool isRandValChanged = false;
+
+static const Vector3 new_positions[] =
     {
         {-0.5f, -0.5f, 0.0f}, //bottom-left
         { 0.5f, -0.5f, 0.0f}, //bottom-right
         { 0.5f,  0.5f, 0.0f}, //top-right
         {-0.5f,  0.5f, 0.0f}  //top-left
 };
-
-static Vector3 rgb_frequency = {0.0f, 0.0f, 0.0f};
-static Vector3 rgb_color = {0.0f, 0.0f, 0.0f};
-static bool isRandValChanged = false;
+static const Vector2 new_tcoords[] =
+    {
+        {0.0f, 0.0f}, //bottom-left
+        {1.0f, 0.0f}, //bottom-right
+        {1.0f, 1.0f}, //top-right
+        {0.0f, 1.0f}  //top-left
+};
+static const Vector3 new_normals[] =
+    {
+        Vector3UnitZ,
+        Vector3UnitZ,
+        Vector3UnitZ,
+        Vector3UnitZ};
 
 int main()
 {
@@ -158,19 +171,34 @@ int main()
 
     //--------------------------------------------
 
-    GLuint vbo_new;
-    glGenBuffers(1, &vbo_new);
-    handles_buffers.push_back(vbo_new);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_new);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(new_vertices), new_vertices, GL_STATIC_DRAW);
-
+    GLuint vbo_new_positions;
+    GLuint vbo_new_tcoords;
+    GLuint vbo_new_normals;
+    glGenBuffers(1, &vbo_new_positions);
+    glGenBuffers(1, &vbo_new_tcoords);
+    glGenBuffers(1, &vbo_new_normals);
+    handles_buffers.push_back(vbo_new_positions);
+    handles_buffers.push_back(vbo_new_tcoords);
+    handles_buffers.push_back(vbo_new_normals);
     GLuint vao_new;
     glGenVertexArrays(1, &vao_new);
     handles_vaos.push_back(vao_new);
     glBindVertexArray(vao_new);
 
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_new_positions);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(new_positions), new_positions, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
     glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_new_tcoords);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(new_tcoords), new_tcoords, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2), (GLvoid *)0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_new_normals);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(new_normals), new_normals, GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (GLvoid *)0);
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -332,9 +360,9 @@ int main()
     }
 
     if (!handles_buffers.empty())
-        glDeleteBuffers(handles_buffers.size(), handles_buffers.data());
+        glDeleteBuffers(GLsizei(handles_buffers.size()), handles_buffers.data());
     if (!handles_vaos.empty())
-        glDeleteVertexArrays(handles_vaos.size(), handles_vaos.data());
+        glDeleteVertexArrays(GLsizei(handles_vaos.size()), handles_vaos.data());
 
     glDeleteProgram(shader1);
     glDeleteProgram(shader2);
