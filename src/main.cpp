@@ -222,7 +222,8 @@ int main()
     //case 11--------------------------------------------
 
     Mesh head;
-    LoadMesh(&head, "./assets/meshes/TriangulatedMonkeyHead.obj");
+    LoadMesh(&head, "./assets/meshes/head.obj");
+    // LoadMesh(&head, "./assets/meshes/TriangulatedMonkeyHead.obj");
 
     //===============================================================================
     //===============================================================================
