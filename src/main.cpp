@@ -230,6 +230,7 @@ int main()
 
     int object_index = 0;
     int total_cases = 12;
+    glEnable(GL_DEPTH_TEST); //important to clear depth!
     glEnable(GL_CULL_FACE); //by default this is disabled
     bool is_ccw = true; //opengl's default is also ccw
     bool is_culling_back = true; //opengl's default is also culling the back face
@@ -256,7 +257,7 @@ int main()
 
         /* Render here */
         glClearColor(r, g, b, a);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //important to clear depth!
 
         if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_UP))
         {
