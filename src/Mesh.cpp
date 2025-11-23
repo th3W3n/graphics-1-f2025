@@ -2,6 +2,7 @@
 #include "Mesh.h"
 #include <cassert>
 #include <cstring>
+#include <iostream>
 
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"
@@ -12,7 +13,15 @@
 
 //----------------------------------------------------------------------------------
 //helper functions not exposed in headers
-static void GenerateMeshDataParPlatonic(Mesh *mesh, ParShapesType type);
+static par_shapes_mesh *GeneratePlatonic(MeshType type);
+static par_shapes_mesh *GenerateParametric(MeshType type,
+                                           int slice,
+                                           int stack);
+static par_shapes_mesh *GenerateParametricRadius(MeshType type,
+                                                 int slice,
+                                                 int stack,
+                                                 float radius);
+static void GenerateParShapesMesh(Mesh *mesh, par_shapes_mesh *par);
 //----------------------------------------------------------------------------------
 
 void CreateMesh(Mesh *mesh,
@@ -76,14 +85,63 @@ void LoadMesh(Mesh *mesh)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-void LoadMesh(Mesh *mesh, ParShapesType type)
+void LoadMesh(Mesh *mesh, MeshType type)
 {
-    GenerateMeshDataParPlatonic(mesh, type);
+    par_shapes_mesh *par = GeneratePlatonic(type);
+    GenerateParShapesMesh(mesh, par);
+    par_shapes_free_mesh(par);
+    LoadMesh(mesh);
+}
+void LoadMesh(Mesh *mesh, MeshType type, int slice, int stack)
+{
+    par_shapes_mesh *par = GenerateParametric(type, slice, stack);
+    GenerateParShapesMesh(mesh, par);
+    par_shapes_free_mesh(par);
+    LoadMesh(mesh);
+}
+void LoadMesh(Mesh *mesh, MeshType type, int slice, int stack, float radius)
+{
+    par_shapes_mesh *par = GenerateParametricRadius(type, slice, stack, radius);
+    GenerateParShapesMesh(mesh, par);
+    par_shapes_free_mesh(par);
     LoadMesh(mesh);
 }
 void LoadMesh(Mesh *mesh, const char *path)
 {
     fastObjMesh *obj = fast_obj_read(path);
+    assert(obj != nullptr);
+
+    for (size_t i = 0; i < obj->index_count; i++)
+    {
+        unsigned int p_idx = obj->indices[i].p; //positions
+        unsigned int t_idx = obj->indices[i].t; //tcoords
+        unsigned int n_idx = obj->indices[i].n; //normals
+
+        Vector3 pos;
+        pos.x = obj->positions[p_idx * 3 + 0];
+        pos.y = obj->positions[p_idx * 3 + 1];
+        pos.z = obj->positions[p_idx * 3 + 2];
+        mesh->positions.push_back(pos);
+
+        if (obj->texcoords != nullptr)
+        {
+            Vector2 tc;
+            tc.x = obj->texcoords[t_idx * 2 + 0];
+            tc.y = obj->texcoords[t_idx * 2 + 1];
+            mesh->tcoords.push_back(tc);
+        }
+
+        Vector3 norm;
+        norm.x = obj->normals[n_idx * 3 + 0];
+        norm.y = obj->normals[n_idx * 3 + 1];
+        norm.z = obj->normals[n_idx * 3 + 2];
+        mesh->normals.push_back(norm);
+
+        mesh->indices.push_back((GLuint)i);
+    }
+
+    fast_obj_destroy(obj);
+    LoadMesh(mesh);
 }
 void UnloadMesh(Mesh *mesh)
 {
@@ -105,35 +163,82 @@ void DrawMesh(const Mesh &mesh, GLuint shaderProgram, GLint u_mvp, Matrix mat)
     glBindVertexArray(mesh.vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
     glDrawElements(GL_TRIANGLES, GLsizei(mesh.indices.size()), GL_UNSIGNED_INT, 0);
+    //TODO: if no ebo then use glDrawArrays
 }
 
 //----------------------------------------------------------------------------------
 //helper functions implementation
 
-static void GenerateMeshDataParPlatonic(Mesh *mesh, ParShapesType type)
+static par_shapes_mesh *GeneratePlatonic(MeshType type)
 {
     par_shapes_mesh *par = nullptr;
     switch (type)
     {
-    case ParShapesType::MESH_TETRAHEDRON:
-        par = par_shapes_create_tetrahedron();
-        break;
-    case ParShapesType::MESH_CUBE:
-        par = par_shapes_create_cube();
-        break;
-    case ParShapesType::MESH_OCTAHEDRON:
-        par = par_shapes_create_octahedron();
-        break;
-    case ParShapesType::MESH_DODECAHEDRON:
-        par = par_shapes_create_dodecahedron();
-        break;
-    case ParShapesType::MESH_ICOSAHEDRON:
+    case MeshType::PAR_ICOSAHEDRON:
         par = par_shapes_create_icosahedron();
         break;
-    default:
-        return;
+    case MeshType::PAR_DODECAHEDRON:
+        par = par_shapes_create_dodecahedron();
+        break;
+    case MeshType::PAR_OCTAHEDRON:
+        par = par_shapes_create_octahedron();
+        break;
+    case MeshType::PAR_TETRAHEDRON:
+        par = par_shapes_create_tetrahedron();
+        break;
+    case MeshType::PAR_CUBE:
+        par = par_shapes_create_cube();
+        //par_shapes cube's centre is in a corner by default
+        par_shapes_translate(par, -0.5f, -0.5f, -0.5f);
+        break;
     }
-
+    return par;
+}
+static par_shapes_mesh *GenerateParametric(MeshType type,
+                                           int slice,
+                                           int stack)
+{
+    par_shapes_mesh *par = nullptr;
+    switch (type)
+    {
+    case MeshType::PAR_CYLINDER:
+        par = par_shapes_create_cylinder(slice, stack);
+        break;
+    case MeshType::PAR_CONE:
+        par = par_shapes_create_cone(slice, stack);
+        break;
+    case MeshType::PAR_DISK:
+        par = par_shapes_create_parametric_disk(slice, stack);
+        break;
+    case MeshType::PAR_SPHERE:
+        par = par_shapes_create_parametric_sphere(slice, stack);
+        break;
+    case MeshType::PAR_HEMISPHERE:
+        par = par_shapes_create_hemisphere(slice, stack);
+        break;
+    case MeshType::PAR_PLANE:
+        par = par_shapes_create_plane(slice, stack);
+        break;
+    }
+    return par;
+}
+static par_shapes_mesh *GenerateParametricRadius(MeshType type,
+                                                 int slice,
+                                                 int stack,
+                                                 float radius)
+{
+    par_shapes_mesh *par = nullptr;
+    switch (type)
+    {
+    //Platonic Solids
+    case MeshType::PAR_TORUS:
+        par = par_shapes_create_torus(slice, stack, radius);
+        break;
+    }
+    return par;
+}
+static void GenerateParShapesMesh(Mesh *mesh, par_shapes_mesh *par)
+{
     assert(par != nullptr);
     par_shapes_compute_normals(par);
 
@@ -156,6 +261,4 @@ static void GenerateMeshDataParPlatonic(Mesh *mesh, ParShapesType type)
     //cannot use memcpy here since par_shapes uses uint16_t, and I am using GLuint
     for (size_t i = 0; i < 3 * par->ntriangles; i++)
         mesh->indices[i] = par->triangles[i];
-
-    par_shapes_free_mesh(par);
 }

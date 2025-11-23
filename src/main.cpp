@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <vector>
 
+static constexpr int windowWidth = 800;
+static constexpr int windowHeight = 800;
+
 struct Vertex
 {
     Vector2 pos; // offset of 0
@@ -75,7 +78,7 @@ int main()
     std::vector<GLuint> handles_buffers;
     std::vector<GLuint> handles_vaos;
 
-    InitWindow(800, 800, "Graphics Course");
+    InitWindow(windowWidth, windowHeight, "Graphics Course");
     float r, g, b, a;
     r = g = b = a = 0.0f;
 
@@ -208,16 +211,24 @@ int main()
 
     //case 9--------------------------------------------
 
-    // Mesh head;
-    // LoadMesh(&head, "./assets/meshes/Monkey.obj");
     Mesh par;
-    LoadMesh(&par, ParShapesType::MESH_OCTAHEDRON);
+    LoadMesh(&par, MeshType::PAR_OCTAHEDRON);
+
+    //case 10--------------------------------------------
+
+    Mesh par2;
+    LoadMesh(&par2, MeshType::PAR_TORUS, 10, 50, 0.1f);
+
+    //case 11--------------------------------------------
+
+    Mesh head;
+    LoadMesh(&head, "./assets/meshes/TriangulatedMonkeyHead.obj");
 
     //===============================================================================
     //===============================================================================
 
     int object_index = 0;
-    int total_cases = 10;
+    int total_cases = 12;
     glEnable(GL_CULL_FACE); //by default this is disabled
     bool is_ccw = true; //opengl's default is also ccw
     bool is_culling_back = true; //opengl's default is also culling the back face
@@ -226,10 +237,11 @@ int main()
     GLint u_world = glGetUniformLocation(shader1, "u_world");
     GLint u_mvp = glGetUniformLocation(shader2, "u_mvp");
 
-    Matrix world = MatrixIdentity();
+    Matrix world, proj, view, mvp;
+    world = proj = view = mvp = MatrixIdentity();
 
     // Generally you want to Scale * Rotate * Translate (order matters)!!!
-    //world = MatrixRotateZ(30.0f * DEG2RAD) * MatrixTranslate(0.5f, 0.0f, 0.0f);
+    // world = MatrixRotateZ(30.0f * DEG2RAD) * MatrixTranslate(0.5f, 0.0f, 0.0f);
 
     //--------------------------------------------
 
@@ -372,6 +384,23 @@ int main()
             world = MatrixMultiply(MatrixTranslate(0.0f, -0.5f, 0.0f), MatrixRotateY(tt));
             DrawMesh(par, shader2, u_mvp, world);
             break;
+        case 10:
+            // Matrix proj = MatrixOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 100.0f);
+            proj = MatrixPerspective(75.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+            view = MatrixLookAt({0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
+            world = MatrixRotateY(tt * 100.0f * DEG2RAD);
+            mvp = world * view * proj;
+            DrawMesh(par2, shader2, u_mvp, mvp);
+            break;
+        case 11:
+            // Matrix proj = MatrixOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 100.0f);
+            proj = MatrixPerspective(75.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+            view = MatrixLookAt({0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
+            world = MatrixRotateY(tt * 100.0f * DEG2RAD);
+            mvp = world * view * proj;
+            world = MatrixMultiply(MatrixTranslate(0.0f, 0.0f, 0.0f), MatrixRotateY(tt));
+            DrawMesh(head, shader2, u_mvp, mvp);
+            break;
         }
 
         // Called at end of the frame to swap buffers and update input
@@ -392,7 +421,8 @@ int main()
 
     UnloadMesh(&plane);
     UnloadMesh(&par);
-    // UnloadMesh(&head);
+    UnloadMesh(&par2);
+    UnloadMesh(&head);
 
     KillWindow();
     return 0;

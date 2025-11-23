@@ -3,14 +3,24 @@
 #include <glad/glad.h>
 #include <vector>
 
-enum class ParShapesType
+enum class MeshType
 {
-    MESH_TETRAHEDRON,
-    MESH_CUBE,
-    MESH_OCTAHEDRON,
-    MESH_DODECAHEDRON,
-    MESH_ICOSAHEDRON,
-    MESH_TYPE_COUNT
+    //<https://prideout.net/shapes>
+    //Platonic Solids
+    PAR_ICOSAHEDRON,
+    PAR_DODECAHEDRON,
+    PAR_OCTAHEDRON,
+    PAR_TETRAHEDRON,
+    PAR_CUBE,
+    //Parametric Surfaces
+    PAR_CYLINDER,
+    PAR_CONE,
+    PAR_DISK,
+    PAR_SPHERE,
+    PAR_HEMISPHERE,
+    PAR_PLANE,
+    //Parametric Surfaces with radius
+    PAR_TORUS,
 };
 
 struct Mesh
@@ -37,7 +47,13 @@ void CreateMesh(Mesh *mesh,
                 const Vector3 *normals,
                 const GLuint *indices);
 void LoadMesh(Mesh *mesh);
-void LoadMesh(Mesh *mesh, ParShapesType type);
+void LoadMesh(Mesh *mesh, MeshType type);
+void LoadMesh(Mesh *mesh, MeshType type, int slice, int stack);
+void LoadMesh(Mesh *mesh,
+              MeshType type, int slice, int stack, float radius);
 void LoadMesh(Mesh *mesh, const char *path);
 void UnloadMesh(Mesh *mesh);
-void DrawMesh(const Mesh &mesh, GLuint shaderProgram, GLint u_mvp = -1, Matrix mat = MatrixIdentity());
+void DrawMesh(const Mesh &mesh,
+              GLuint shaderProgram,
+              GLint u_mvp = -1,
+              Matrix mat = MatrixIdentity());
