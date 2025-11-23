@@ -43,7 +43,7 @@ void CreateMesh(Mesh *mesh,
         mesh->indices.push_back(indices[i]);
     }
 }
-void LoadMesh(Mesh *mesh)
+void LoadMeshGPU(Mesh *mesh)
 {
     assert(!mesh->positions.empty());
 
@@ -90,22 +90,23 @@ void LoadMesh(Mesh *mesh, MeshType type)
     par_shapes_mesh *par = GeneratePlatonic(type);
     GenerateParShapesMesh(mesh, par);
     par_shapes_free_mesh(par);
-    LoadMesh(mesh);
+    LoadMeshGPU(mesh);
 }
 void LoadMesh(Mesh *mesh, MeshType type, int slice, int stack)
 {
     par_shapes_mesh *par = GenerateParametric(type, slice, stack);
     GenerateParShapesMesh(mesh, par);
     par_shapes_free_mesh(par);
-    LoadMesh(mesh);
+    LoadMeshGPU(mesh);
 }
 void LoadMesh(Mesh *mesh, MeshType type, int slice, int stack, float radius)
 {
     par_shapes_mesh *par = GenerateParametricRadius(type, slice, stack, radius);
     GenerateParShapesMesh(mesh, par);
     par_shapes_free_mesh(par);
-    LoadMesh(mesh);
+    LoadMeshGPU(mesh);
 }
+//NOTE: non-deduplicated vertices!
 void LoadMesh(Mesh *mesh, const char *path)
 {
     fastObjMesh *obj = fast_obj_read(path);
@@ -141,7 +142,7 @@ void LoadMesh(Mesh *mesh, const char *path)
     }
 
     fast_obj_destroy(obj);
-    LoadMesh(mesh);
+    LoadMeshGPU(mesh);
 }
 void UnloadMesh(Mesh *mesh)
 {

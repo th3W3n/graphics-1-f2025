@@ -46,7 +46,7 @@ void CreateMesh(Mesh *mesh,
                 const Vector2 *tcoords,
                 const Vector3 *normals,
                 const GLuint *indices);
-void LoadMesh(Mesh *mesh);
+void LoadMeshGPU(Mesh *mesh);
 void LoadMesh(Mesh *mesh, MeshType type);
 void LoadMesh(Mesh *mesh, MeshType type, int slice, int stack);
 void LoadMesh(Mesh *mesh,

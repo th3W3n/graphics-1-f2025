@@ -207,7 +207,7 @@ int main()
 
     Mesh plane;
     CreateMesh(&plane, 4, 6, new_positions, new_tcoords, new_normals, vertices_quad_indices);
-    LoadMesh(&plane);
+    LoadMeshGPU(&plane);
 
     //case 9--------------------------------------------
 
