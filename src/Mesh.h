@@ -56,4 +56,5 @@ void UnloadMesh(Mesh *mesh);
 void DrawMesh(const Mesh &mesh,
               GLuint shaderProgram,
               GLint u_mvp = -1,
-              Matrix mat = MatrixIdentity());
+              Matrix mat = MatrixIdentity(),
+              GLuint texture = -1);

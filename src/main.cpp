@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include "Shader.h"
+#include "Texture.h"
 #include "Window.h"
 #include "raymath.h"
 #include <cstddef>
@@ -89,6 +90,10 @@ int main()
     GLuint shader2_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader2.vert");
     GLuint shader2_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader2.frag");
     GLuint shader2 = CreateProgram(shader2_vert, shader2_frag);
+
+    GLuint shader3_vert = CreateShader(GL_VERTEX_SHADER, "./assets/shaders/shader3.vert");
+    GLuint shader3_frag = CreateShader(GL_FRAGMENT_SHADER, "./assets/shaders/shader3.frag");
+    GLuint shader3 = CreateProgram(shader3_vert, shader3_frag);
 
     GLuint vbos_rainbow[2];
     glGenBuffers(2, vbos_rainbow);
@@ -212,12 +217,14 @@ int main()
     //case 9--------------------------------------------
 
     Mesh par;
-    LoadMesh(&par, MeshType::PAR_OCTAHEDRON);
+    LoadMesh(&par, MeshType::PAR_TETRAHEDRON);
 
     //case 10--------------------------------------------
 
     Mesh par2;
-    LoadMesh(&par2, MeshType::PAR_TORUS, 10, 50, 0.1f);
+    Mesh par3;
+    LoadMesh(&par2, MeshType::PAR_OCTAHEDRON);
+    LoadMesh(&par3, MeshType::PAR_TORUS, 10, 50, 0.1f);
 
     //case 11--------------------------------------------
 
@@ -225,11 +232,23 @@ int main()
     LoadMesh(&head, "./assets/meshes/head.obj");
     // LoadMesh(&head, "./assets/meshes/TriangulatedMonkeyHead.obj");
 
+    //case 12--------------------------------------------
+
+    Mesh face;
+    Mesh hair;
+    Mesh eyes;
+    LoadMesh(&face, "./assets/meshes/Elf/Face.obj");
+    LoadMesh(&hair, "./assets/meshes/Elf/Hair.obj");
+    LoadMesh(&eyes, "./assets/meshes/Elf/Eyes.obj");
+    GLuint texFace = LoadTexture("./assets/textures/Elf/Face.jpg");
+    GLuint texHair = LoadTexture("./assets/textures/Elf/Hair.jpg");
+    GLuint texEyes = LoadTexture("./assets/textures/Elf/Eyes.jpg");
+
     //===============================================================================
     //===============================================================================
 
     int object_index = 0;
-    int total_cases = 12;
+    int total_cases = 13;
     glEnable(GL_DEPTH_TEST); //important to clear depth!
     glEnable(GL_CULL_FACE); //by default this is disabled
     bool is_ccw = true; //opengl's default is also ccw
@@ -238,6 +257,7 @@ int main()
     GLint u_color = glGetUniformLocation(shader1, "u_color");
     GLint u_world = glGetUniformLocation(shader1, "u_world");
     GLint u_mvp = glGetUniformLocation(shader2, "u_mvp");
+    GLint u_mvp2 = glGetUniformLocation(shader3, "u_mvp");
 
     Matrix world, proj, view, mvp;
     world = proj = view = mvp = MatrixIdentity();
@@ -297,112 +317,127 @@ int main()
         }
         switch (object_index)
         {
-        case 0:
-            //white triangle
-            glUseProgram(shader1);
-            glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
-            //must use MatrixToFloat to send mat4 since raylib matrix memory is in a different layout than glsl mat4
-            glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
-            glBindVertexArray(vertex_array_white);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            break;
-
-        case 1:
-            //rainbow triangle
-            glUseProgram(shader1);
-            glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
-            glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
-            glBindVertexArray(vertex_array_rainbow);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            break;
-
-        case 2:
-            //colour changes over time (using uniforms)
-            {
-                rgb_color.x = (sinf(tt * rgb_frequency.x) + 1.0f) * 0.5f;
-                rgb_color.y = (sinf(tt * rgb_frequency.y) + 1.0f) * 0.5f;
-                rgb_color.z = (sinf(tt * rgb_frequency.z) + 1.0f) * 0.5f;
+            case 0:
+                //white triangle
                 glUseProgram(shader1);
-                glUniform3fv(u_color, 1, &rgb_color.x);
+                glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                //must use MatrixToFloat to send mat4 since raylib matrix memory is in a different layout than glsl mat4
                 glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
                 glBindVertexArray(vertex_array_white);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
-            }
-            break;
+                break;
 
-        case 3:
-            //translates back and forth from x = 1 to x = -1
-            {
-                float translateX = sinf(tt);
-                world = MatrixTranslate(translateX, 0.0f, 0.0f);
+            case 1:
+                //rainbow triangle
                 glUseProgram(shader1);
                 glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
-                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
+                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
                 glBindVertexArray(vertex_array_rainbow);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
-            }
-            break;
+                break;
 
-        case 4:
-            //rotates counter-clockwise about the z-axis
-            {
+            case 2:
+                //colour changes over time (using uniforms)
+                {
+                    rgb_color.x = (sinf(tt * rgb_frequency.x) + 1.0f) * 0.5f;
+                    rgb_color.y = (sinf(tt * rgb_frequency.y) + 1.0f) * 0.5f;
+                    rgb_color.z = (sinf(tt * rgb_frequency.z) + 1.0f) * 0.5f;
+                    glUseProgram(shader1);
+                    glUniform3fv(u_color, 1, &rgb_color.x);
+                    glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+                    glBindVertexArray(vertex_array_white);
+                    glDrawArrays(GL_TRIANGLES, 0, 3);
+                }
+                break;
+
+            case 3:
+                //translates back and forth from x = 1 to x = -1
+                {
+                    float translateX = sinf(tt);
+                    world = MatrixTranslate(translateX, 0.0f, 0.0f);
+                    glUseProgram(shader1);
+                    glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                    glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
+                    glBindVertexArray(vertex_array_rainbow);
+                    glDrawArrays(GL_TRIANGLES, 0, 3);
+                }
+                break;
+
+            case 4:
+                //rotates counter-clockwise about the z-axis
+                {
+                    world = MatrixRotateZ(tt);
+                    glUseProgram(shader1);
+                    glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                    glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
+                    glBindVertexArray(vertex_array_rainbow);
+                    glDrawArrays(GL_TRIANGLES, 0, 3);
+                }
+                break;
+            case 5:
+                glUseProgram(shader1);
+                glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+                glBindVertexArray(vao_quad);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                break;
+            case 6:
+                glUseProgram(shader1);
+                glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
+                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+                glBindVertexArray(vao_quad);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad2);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                break;
+            case 7:
+                glUseProgram(shader2);
+                glUniformMatrix4fv(u_mvp, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
+                glBindVertexArray(vao_new);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+                break;
+            case 8:
                 world = MatrixRotateZ(tt);
-                glUseProgram(shader1);
-                glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
-                glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(world));
-                glBindVertexArray(vertex_array_rainbow);
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-            }
-            break;
-        case 5:
-            glUseProgram(shader1);
-            glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
-            glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
-            glBindVertexArray(vao_quad);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            break;
-        case 6:
-            glUseProgram(shader1);
-            glUniform3f(u_color, 1.0f, 1.0f, 1.0f);
-            glUniformMatrix4fv(u_world, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
-            glBindVertexArray(vao_quad);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad2);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            break;
-        case 7:
-            glUseProgram(shader2);
-            glUniformMatrix4fv(u_mvp, 1, GL_FALSE, MatrixToFloat(MatrixIdentity()));
-            glBindVertexArray(vao_new);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_quad);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            break;
-        case 8:
-            world = MatrixRotateZ(tt);
-            DrawMesh(plane, shader2, u_mvp, world);
-            break;
-        case 9:
-            //translate some offset first, then start rotating
-            world = MatrixMultiply(MatrixTranslate(0.0f, -0.5f, 0.0f), MatrixRotateY(tt));
-            DrawMesh(par, shader2, u_mvp, world);
-            break;
-        case 10:
-            // Matrix proj = MatrixOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 100.0f);
-            proj = MatrixPerspective(75.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
-            view = MatrixLookAt({0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
-            world = MatrixRotateY(tt * 100.0f * DEG2RAD);
-            mvp = world * view * proj;
-            DrawMesh(par2, shader2, u_mvp, mvp);
-            break;
-        case 11:
-            // Matrix proj = MatrixOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 100.0f);
-            proj = MatrixPerspective(75.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
-            view = MatrixLookAt({0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
-            world = MatrixRotateY(tt * 100.0f * DEG2RAD);
-            mvp = world * view * proj;
-            world = MatrixMultiply(MatrixTranslate(0.0f, 0.0f, 0.0f), MatrixRotateY(tt));
-            DrawMesh(head, shader2, u_mvp, mvp);
-            break;
+                DrawMesh(plane, shader2, u_mvp, world);
+                break;
+            case 9:
+                //translate some offset first, then start rotating
+                world = MatrixMultiply(MatrixTranslate(0.0f, -0.5f, 0.0f), MatrixRotateY(tt));
+                DrawMesh(par, shader2, u_mvp, world);
+                break;
+            case 10:
+                // Matrix proj = MatrixOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 100.0f);
+                proj = MatrixPerspective(75.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+                view = MatrixLookAt({0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
+
+                //draw multiple mesh
+                world = MatrixMultiply(MatrixScale(0.7f, 0.9f, 0.7f), MatrixRotateY(tt * 100.0f * DEG2RAD));
+                mvp = world * view * proj;
+                DrawMesh(par2, shader2, u_mvp, mvp);
+
+                world = MatrixRotateY(tt * 100.0f * DEG2RAD);
+                mvp = world * view * proj;
+                DrawMesh(par3, shader2, u_mvp, mvp);
+                break;
+            case 11:
+                // Matrix proj = MatrixOrtho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 100.0f);
+                proj = MatrixPerspective(75.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+                view = MatrixLookAt({0.0f, 0.0f, 5.0f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
+                world = MatrixRotateY(tt * 100.0f * DEG2RAD);
+                mvp = world * view * proj;
+                world = MatrixMultiply(MatrixTranslate(0.0f, 0.0f, 0.0f), MatrixRotateY(tt));
+                DrawMesh(head, shader2, u_mvp, mvp);
+                break;
+            case 12:
+                proj = MatrixPerspective(50.0f * DEG2RAD, (float)windowWidth / (float)windowHeight, 0.01f, 100.0f);
+                view = MatrixLookAt({0.0f, 0.0f, 0.5f}, {0.0f, 0.0f, 0.0f}, Vector3UnitY);
+                world = MatrixMultiply(MatrixScale(1.0f, 1.0f, 1.0f), MatrixRotateY(tt * 30.0f * DEG2RAD));
+                mvp = world * view * proj;
+                DrawMesh(face, shader3, u_mvp2, mvp, texFace);
+                DrawMesh(hair, shader3, u_mvp2, mvp, texHair);
+                DrawMesh(eyes, shader3, u_mvp2, mvp, texEyes);
+                break;
         }
 
         // Called at end of the frame to swap buffers and update input
@@ -424,7 +459,11 @@ int main()
     UnloadMesh(&plane);
     UnloadMesh(&par);
     UnloadMesh(&par2);
+    UnloadMesh(&par3);
     UnloadMesh(&head);
+    UnloadMesh(&face);
+    UnloadMesh(&hair);
+    UnloadMesh(&eyes);
 
     KillWindow();
     return 0;

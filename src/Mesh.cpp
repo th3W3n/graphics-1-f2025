@@ -156,13 +156,19 @@ void UnloadMesh(Mesh *mesh)
     mesh->normals.resize(0);
     mesh->indices.resize(0);
 }
-void DrawMesh(const Mesh &mesh, GLuint shaderProgram, GLint u_mvp, Matrix mat)
+void DrawMesh(const Mesh &mesh,
+              GLuint shaderProgram,
+              GLint u_mvp,
+              Matrix mat,
+              GLuint texture)
 {
     glUseProgram(shaderProgram);
     if (u_mvp != -1) //if a uniform (of mat4) exists
         glUniformMatrix4fv(u_mvp, 1, GL_FALSE, MatrixToFloat(mat));
     glBindVertexArray(mesh.vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
+    if (texture != -1)
+        glBindTexture(GL_TEXTURE_2D, texture);
     glDrawElements(GL_TRIANGLES, GLsizei(mesh.indices.size()), GL_UNSIGNED_INT, 0);
     //TODO: if no ebo then use glDrawArrays
 }
@@ -175,23 +181,23 @@ static par_shapes_mesh *GeneratePlatonic(MeshType type)
     par_shapes_mesh *par = nullptr;
     switch (type)
     {
-    case MeshType::PAR_ICOSAHEDRON:
-        par = par_shapes_create_icosahedron();
-        break;
-    case MeshType::PAR_DODECAHEDRON:
-        par = par_shapes_create_dodecahedron();
-        break;
-    case MeshType::PAR_OCTAHEDRON:
-        par = par_shapes_create_octahedron();
-        break;
-    case MeshType::PAR_TETRAHEDRON:
-        par = par_shapes_create_tetrahedron();
-        break;
-    case MeshType::PAR_CUBE:
-        par = par_shapes_create_cube();
-        //par_shapes cube's centre is in a corner by default
-        par_shapes_translate(par, -0.5f, -0.5f, -0.5f);
-        break;
+        case MeshType::PAR_ICOSAHEDRON:
+            par = par_shapes_create_icosahedron();
+            break;
+        case MeshType::PAR_DODECAHEDRON:
+            par = par_shapes_create_dodecahedron();
+            break;
+        case MeshType::PAR_OCTAHEDRON:
+            par = par_shapes_create_octahedron();
+            break;
+        case MeshType::PAR_TETRAHEDRON:
+            par = par_shapes_create_tetrahedron();
+            break;
+        case MeshType::PAR_CUBE:
+            par = par_shapes_create_cube();
+            //par_shapes cube's centre is in a corner by default
+            par_shapes_translate(par, -0.5f, -0.5f, -0.5f);
+            break;
     }
     return par;
 }
@@ -202,24 +208,24 @@ static par_shapes_mesh *GenerateParametric(MeshType type,
     par_shapes_mesh *par = nullptr;
     switch (type)
     {
-    case MeshType::PAR_CYLINDER:
-        par = par_shapes_create_cylinder(slice, stack);
-        break;
-    case MeshType::PAR_CONE:
-        par = par_shapes_create_cone(slice, stack);
-        break;
-    case MeshType::PAR_DISK:
-        par = par_shapes_create_parametric_disk(slice, stack);
-        break;
-    case MeshType::PAR_SPHERE:
-        par = par_shapes_create_parametric_sphere(slice, stack);
-        break;
-    case MeshType::PAR_HEMISPHERE:
-        par = par_shapes_create_hemisphere(slice, stack);
-        break;
-    case MeshType::PAR_PLANE:
-        par = par_shapes_create_plane(slice, stack);
-        break;
+        case MeshType::PAR_CYLINDER:
+            par = par_shapes_create_cylinder(slice, stack);
+            break;
+        case MeshType::PAR_CONE:
+            par = par_shapes_create_cone(slice, stack);
+            break;
+        case MeshType::PAR_DISK:
+            par = par_shapes_create_parametric_disk(slice, stack);
+            break;
+        case MeshType::PAR_SPHERE:
+            par = par_shapes_create_parametric_sphere(slice, stack);
+            break;
+        case MeshType::PAR_HEMISPHERE:
+            par = par_shapes_create_hemisphere(slice, stack);
+            break;
+        case MeshType::PAR_PLANE:
+            par = par_shapes_create_plane(slice, stack);
+            break;
     }
     return par;
 }
@@ -231,10 +237,10 @@ static par_shapes_mesh *GenerateParametricRadius(MeshType type,
     par_shapes_mesh *par = nullptr;
     switch (type)
     {
-    //Platonic Solids
-    case MeshType::PAR_TORUS:
-        par = par_shapes_create_torus(slice, stack, radius);
-        break;
+        //Platonic Solids
+        case MeshType::PAR_TORUS:
+            par = par_shapes_create_torus(slice, stack, radius);
+            break;
     }
     return par;
 }
