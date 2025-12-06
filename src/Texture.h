@@ -13,3 +13,4 @@ struct Pixel
 
 void CreateSampleImage();
 GLuint LoadTexture(const char *path);
+void UnloadTexture(GLuint texture);

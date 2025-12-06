@@ -464,6 +464,9 @@ int main()
     UnloadMesh(&face);
     UnloadMesh(&hair);
     UnloadMesh(&eyes);
+    UnloadTexture(texFace);
+    UnloadTexture(texHair);
+    UnloadTexture(texEyes);
 
     KillWindow();
     return 0;

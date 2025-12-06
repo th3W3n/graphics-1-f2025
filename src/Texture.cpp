@@ -8,7 +8,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image/stb_image_write.h>
 
-void CreateSampleImage()
+void CreateSampleImage() //demonstrate how we use the write function
 {
     int image_width = 512;
     int image_height = 512;
@@ -36,6 +36,9 @@ GLuint LoadTexture(const char *path)
 {
     GLuint texture;
     glGenTextures(1, &texture);
+    //glBindTexture binds to the currently active texture unit
+    //by default, GL_TEXTURE0 is active
+    //and uniform sampler2D tex1 in shader3.frag defaults to GL_TEXTURE0
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -61,11 +64,18 @@ GLuint LoadTexture(const char *path)
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
         stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
         return texture;
     }
     else //failed to load
     {
         stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
         return -1;
     }
+}
+
+void UnloadTexture(GLuint texture)
+{
+    glDeleteTextures(1, &texture);
 }

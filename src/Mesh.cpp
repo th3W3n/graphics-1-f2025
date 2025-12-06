@@ -169,7 +169,13 @@ void DrawMesh(const Mesh &mesh,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
     if (texture != -1)
         glBindTexture(GL_TEXTURE_2D, texture);
+
     glDrawElements(GL_TRIANGLES, GLsizei(mesh.indices.size()), GL_UNSIGNED_INT, 0);
+
+    if (texture != -1)
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
     //TODO: if no ebo then use glDrawArrays
 }
 
